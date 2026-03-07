@@ -39,6 +39,11 @@ export default function MapExplorer() {
   const [selectedPolicies, setSelectedPolicies] = useState<RelatedPolicyLink[]>(
     [],
   );
+  // Compute initial bounds once, based on all locations
+  const initialBounds = useMemo(() => {
+    return locations.map(loc => [loc.latitude, loc.longitude] as [number, number]);
+  }, [locations]);
+  
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     search: "",
@@ -181,27 +186,20 @@ export default function MapExplorer() {
   const center: [number, number] = [34.05, -118.25]; // Los Angeles
 
   // Component to fit map bounds to all markers
-  function FitBoundsComponent({ locations }: { locations: Location[] }) {
-    const map = useMap();
-    const hasFitBounds = useRef(false);
+ // Component to fit map bounds to all markers on initial load only
+function FitBoundsComponent({ bounds }: { bounds: [number, number][] }) {
+  const map = useMap();
+  const hasZoomed = useRef(false);
 
-    useEffect(() => {
-      if (hasFitBounds.current) return;
+  useEffect(() => {
+    if (hasZoomed.current || bounds.length === 0) return;
 
-      if (locations.length === 0) {
-        map.setView(center, 11);
-      } else {
-        const bounds = locations.map(
-          loc => [loc.latitude, loc.longitude] as [number, number]
-        );
-        map.fitBounds(bounds, { padding: [50, 50] });
-      }
+    map.fitBounds(bounds, { padding: [50, 50] });
+    hasZoomed.current = true;
+  }, [bounds, map]);
 
-      hasFitBounds.current = true;
-    }, [locations, map]);
-
-    return null;
-  }
+  return null;
+}
 
   return (
     <>
@@ -317,7 +315,7 @@ export default function MapExplorer() {
             className="h-full w-full rounded-xl"
             scrollWheelZoom
           >
-            <FitBoundsComponent locations={filtered} />
+            <FitBoundsComponent bounds={initialBounds} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
