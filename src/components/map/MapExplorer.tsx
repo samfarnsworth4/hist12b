@@ -39,11 +39,8 @@ export default function MapExplorer() {
   const [selectedPolicies, setSelectedPolicies] = useState<RelatedPolicyLink[]>(
     [],
   );
-  // Compute initial bounds once, based on all locations
-  const initialBounds = useMemo(() => {
-    return locations.map(loc => [loc.latitude, loc.longitude] as [number, number]);
-  }, [locations]);
   
+
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     search: "",
@@ -52,6 +49,11 @@ export default function MapExplorer() {
     neighborhood: "all",
   });
 
+
+  const initialBounds: [number, number][] = useMemo(() => {
+    return locations?.map(loc => [loc.latitude, loc.longitude] as [number, number]) ?? [];
+  }, [locations]);
+  
   useEffect(() => {
     const load = async () => {
       setLoading(true);
